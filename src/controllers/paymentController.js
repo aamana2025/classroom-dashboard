@@ -164,7 +164,7 @@ export const stripeWebhook = async (req, res) => {
         user.plan = plan._id;
         user.status = "active";
         user.expiresAt = expiresAt;
-        user.paymentURL = '';
+        delete user.paymentURL;
         await user.save();
 
         // ✅ Create or update transaction for existing user
@@ -185,7 +185,6 @@ export const stripeWebhook = async (req, res) => {
         await sendPaymentSuccessEmail(user);
       }
     }
-
     res.status(200).json({ received: true });
   } catch (err) {
     console.error("❌ Webhook processing error:", err);

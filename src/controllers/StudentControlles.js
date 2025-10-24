@@ -84,7 +84,7 @@ export const getStudentData = async (req, res) => {
       status: user.status,
       createdAt: user.createdAt,
       expiresAt: user.expiresAt,
-      paymentURL:user.paymentURL,
+      paymentURL: user.paymentURL,
       plan: user.plan
         ? {
           id: user.plan._id,
@@ -179,18 +179,23 @@ export const getStudentClasseNote = async (req, res) => {
       return res.status(400).json({ message: "classId is required" });
     }
 
-    // Find the class by ID and select only the notes
+    // Find the class by ID and select only the notes and name
     const classData = await Class.findById(classId).select("notes name");
 
     if (!classData) {
       return res.status(404).json({ message: "Class not found" });
     }
 
-    // Return notes with class name
+    // Sort notes from newest to oldest (by createdAt)
+    const sortedNotes = [...classData.notes].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    // Return sorted notes with class name
     res.json({
       classId: classData._id,
       className: classData.name,
-      notes: classData.notes.map(note => ({
+      notes: sortedNotes.map(note => ({
         msg: note.msg,
         createdAt: note.createdAt,
       })),
@@ -252,7 +257,12 @@ export const getAllFilesClass = async (req, res) => {
 
     const expireTime = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
 
-    const files = classData.pdfs.map((file) => {
+    // Sort PDFs from newest to oldest (by createdAt or addedAt)
+    const sortedFiles = [...classData.pdfs].sort(
+      (a, b) => new Date(b.createdAt || b.addedAt) - new Date(a.createdAt || a.addedAt)
+    );
+
+    const files = sortedFiles.map((file) => {
       const secureUrl = cloudinary.utils.private_download_url(
         file.public_id,
         "pdf",
@@ -277,6 +287,7 @@ export const getAllFilesClass = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // ✅ Student: Get single Task (12h signed link)
 export const getTaskForStudent = async (req, res) => {
@@ -329,7 +340,12 @@ export const getAllTasksForStudent = async (req, res) => {
 
     const expireTime = Math.floor(Date.now() / 1000) + 60 * 60 * 12;
 
-    const tasks = classroom.tasks.map((task) => {
+    // Sort tasks from newest to oldest by addedAt
+    const sortedTasks = [...classroom.tasks].sort(
+      (a, b) => new Date(b.addedAt) - new Date(a.addedAt)
+    );
+
+    const tasks = sortedTasks.map((task) => {
       const signedUrl = cloudinary.utils.private_download_url(
         task.public_id,
         "pdf",
@@ -422,7 +438,12 @@ export const getStudentVideos = async (req, res) => {
     const classroom = await Class.findById(classId).select("videos students");
     if (!classroom) return res.status(404).json({ message: "Class not found" });
 
-    res.json(classroom.videos.map(v => ({
+    // Sort videos from newest to oldest by uploadedAt
+    const sortedVideos = [...classroom.videos].sort(
+      (a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt)
+    );
+
+    res.json(sortedVideos.map(v => ({
       name: v.name,
       description: v.description,
       videoId: v.videoId, // Unlisted YouTube ID

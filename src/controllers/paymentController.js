@@ -161,17 +161,11 @@ export const stripeWebhook = async (req, res) => {
             break;
         }
 
-        await User.updateOne(
-          { _id: user._id },
-          {
-            $set: {
-              plan: plan._id,
-              status: "active",
-              expiresAt: expiresAt,
-            },
-            $unset: { paymentURL: "" },
-          }
-        );
+        user.plan = plan._id;
+        user.status = "active";
+        user.expiresAt = expiresAt;
+        delete user.paymentURL;
+        await user.save();
 
         // ✅ Create or update transaction for existing user
         await Transaction.findOneAndUpdate(

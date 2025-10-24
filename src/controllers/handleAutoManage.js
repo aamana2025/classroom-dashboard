@@ -31,9 +31,9 @@ const sendEmail = async (to, subject, text) => {
 const cleanExpiredUsers = async () => {
     try {
         const now = new Date();
-        const threshold45Days = getDateBefore(45);
-        const warning7Days = getDateBefore(38);
-        const warning1Day = getDateBefore(44);
+        const threshold45Days = getDateBefore(10);
+        const warning7Days = getDateBefore(5);
+        const warning1Day = getDateBefore(8);
 
         // Find all users that need attention
         const users = await Users.find({
@@ -49,7 +49,7 @@ const cleanExpiredUsers = async () => {
 
             // Send 7-day warning
             if (createdAt <= warning7Days && !user.warning7Sent) {
-                await sendEmail(user.email, "Account Deletion Warning", "Your account and all data will be deleted in 7 days.");
+                await sendEmail(user.email, "Account Deletion Warning", "Your account and all data will be deleted in 5 days.");
                 user.warning7Sent = true;
             }
 

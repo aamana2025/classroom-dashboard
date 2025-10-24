@@ -84,6 +84,7 @@ export const getStudentData = async (req, res) => {
       status: user.status,
       createdAt: user.createdAt,
       expiresAt: user.expiresAt,
+      paymentURL:user.paymentURL,
       plan: user.plan
         ? {
           id: user.plan._id,

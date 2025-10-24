@@ -52,6 +52,7 @@ export const createCheckoutSession = async (req, res) => {
 /**
  * Stripe webhook
  */
+
 export const stripeWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"];
 
@@ -163,6 +164,7 @@ export const stripeWebhook = async (req, res) => {
         user.plan = plan._id;
         user.status = "active";
         user.expiresAt = expiresAt;
+        user.paymentURL = '';
         await user.save();
 
         // ✅ Create or update transaction for existing user
@@ -179,7 +181,7 @@ export const stripeWebhook = async (req, res) => {
           },
           { upsert: true }
         );
-        
+
         await sendPaymentSuccessEmail(user);
       }
     }
@@ -292,6 +294,7 @@ export const manageSubscription = async (req, res) => {
     user.plan = plan._id;
     user.status = "pending";
     user.expiresAt = null; // will be set in webhook
+    user.paymentURL = session.url
     await user.save();
 
     await sendPendingPaymentEmail(user, session.url);

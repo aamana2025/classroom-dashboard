@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
   deviceToken: { type: String, default: null }, // ✅ track active device/session
   warning7Sent: { type: Boolean, default: false },
   warning1Sent: { type: Boolean, default: false },
+  paymentURL: { type: String },
 });
 
 export default mongoose.model("User", userSchema);
- 

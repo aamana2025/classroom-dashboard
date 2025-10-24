@@ -294,7 +294,7 @@ export const manageSubscription = async (req, res) => {
     user.plan = plan._id;
     user.status = "pending";
     user.expiresAt = null; // will be set in webhook
-    user.paymentURL = session.url
+    user.paymentURL = session.url;
     await user.save();
 
     await sendPendingPaymentEmail(user, session.url);

@@ -309,6 +309,7 @@ export const getAllStudents = async (req, res) => {
                     email: student.email,
                     phone: student.phone,
                     status: student.status,
+                    paymentURL:student.paymentURL,
                     plan: studentPlan,
                     classes: student.classes.map((cls) => ({
                         id: cls._id,

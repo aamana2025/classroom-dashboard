@@ -74,12 +74,12 @@ export const loginUser = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
-    // Check if subscription expired
-    if (user.expiresAt && new Date() > user.expiresAt) {
-      user.status = "pending"; // expire account
-      await user.save();
-      return res.status(403).json({ message: "Subscription expired" });
-    }
+    // // Check if subscription expired
+    // if (user.expiresAt && new Date() > user.expiresAt) {
+    //   user.status = "pending"; // expire account
+    //   await user.save();
+    //   return res.status(403).json({ message: "Subscription expired" });
+    // }
 
     // Check if user already logged in on another device
     if (user.deviceToken && user.deviceToken !== deviceToken) {

@@ -4,7 +4,7 @@ import upload from "../middleware/multer.js";
 import { userActiveMiddleware } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
-// router.use(userActiveMiddleware);
+router.use(userActiveMiddleware);
 
 //class
 router.post("/join-class", joinClass);

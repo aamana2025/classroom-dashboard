@@ -2,12 +2,14 @@ import express from "express";
 import { adminMiddleware, authMiddleware } from "../middleware/authMiddleware.js";
 import {
     addAdmin, addClasses, addFilesClass, addNoteClasses, addTaskClass,
+    createSubscripe,
     deleteAdmin, deleteClasses, deleteFilesClass, deleteNoteClasses,
     deleteTaskClass, deleteVideo, forgotAdminPassword, getAdminBYID,
     getAdmins, getAllClasses, getAllFilesClass, getAllStudents, getAllTasksClass,
     getAllTransactions, getclassByID, getdashReport, getFilesClass, gethomeReport, getNotesClasses, getStudentClasses,
+    getstudents,
     getTaskClass, getTaskesSubmissions, getTaskSubmissionsAdmin, getVideos, KickStudentClasses, loginAdmin,
-    pendingUsers, reloginAdmin, resendPaymentLink, resetAdminPassword, updateAdmin,
+    pendingUsers, reloginAdmin, resendPaymentLink, resetAdminPassword, reSubscripe, updateAdmin,
     updateClassByID, updateFilesClass, updateNoteClasses, updateTaskClass, uploadVideo
 } from "../controllers/AdminAuthControlles.js";
 import upload from "../middleware/multer.js";
@@ -87,5 +89,10 @@ router.get("/classe/:classId/video", getVideos);
 //report
 router.get("/reportes", getdashReport);
 router.get("/homeReport", gethomeReport);
+
+// subscripe
+router.post("/subscripe", createSubscripe);
+router.post("/reSubscripe", reSubscripe);
+router.get("/students-sub", getstudents);
 
 export default router;

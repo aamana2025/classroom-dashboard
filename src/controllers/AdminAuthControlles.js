@@ -26,7 +26,7 @@ export const loginAdmin = async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: "7d" }
         );
-        
+
 
         res.status(200).json({
             message: "Admin login successful",
@@ -309,7 +309,7 @@ export const getAllStudents = async (req, res) => {
                     email: student.email,
                     phone: student.phone,
                     status: student.status,
-                    paymentURL:student.paymentURL,
+                    paymentURL: student.paymentURL,
                     plan: studentPlan,
                     classes: student.classes.map((cls) => ({
                         id: cls._id,
@@ -1664,3 +1664,154 @@ export const gethomeReport = async (req, res) => {
         res.status(500).json({ error: "فشل في جلب البيانات", details: err.message });
     }
 }
+
+export const createSubscripe = async (req, res) => {
+    try {
+        const { name, email, password, phone, planId } = req.body;
+
+        if (!name || !email || !password || !planId) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        // Check if user already exists
+        const existingUser = await Users.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: "User already exists" });
+        }
+
+        // Check if plan exists
+        const plan = await Plan.findById(planId);
+        if (!plan) {
+            return res.status(404).json({ message: "Plan not found" });
+        }
+        // Calculate expiration date
+        let expiresAt = new Date();
+        switch (plan.durationType) {
+            case "day":
+                expiresAt.setDate(expiresAt.getDate() + plan.durationValue);
+                break;
+            case "week":
+                expiresAt.setDate(expiresAt.getDate() + plan.durationValue * 7);
+                break;
+            case "month":
+                expiresAt.setMonth(expiresAt.getMonth() + plan.durationValue);
+                break;
+            case "year":
+                expiresAt.setFullYear(expiresAt.getFullYear() + plan.durationValue);
+                break;
+        }
+
+        const hashed = await bcrypt.hash(password, 10);
+        // Create user (status pending until approved manually)
+        const user = await Users.create({
+            name,
+            email,
+            password: hashed,
+            phone,
+            plan: plan._id,
+            status: "active",
+            expiresAt
+        });
+
+        // Create transaction record
+        const transaction = await Transaction.create({
+            user: user._id,
+            amount: plan.price,
+            currency: "KWD",
+            status: "succeeded",
+            plan: plan._id,
+        });
+
+        return res.status(201).json({
+            message: "Subscription request created successfully",
+            user,
+            transaction,
+        });
+    } catch (error) {
+        console.error("Error in createSubscripe:", error);
+        res.status(500).json({ message: "Server error", error });
+    }
+};
+
+// 🟡 Re-subscribe (existing user renewing)
+export const reSubscripe = async (req, res) => {
+    try {
+        const { userId, planId } = req.body;
+
+        if (!userId || !planId) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const user = await Users.findById(userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        const plan = await Plan.findById(planId);
+        if (!plan) return res.status(404).json({ message: "Plan not found" });
+
+        let expiresAt = new Date();
+        switch (plan.durationType) {
+            case "day":
+                expiresAt.setDate(expiresAt.getDate() + plan.durationValue);
+                break;
+            case "week":
+                expiresAt.setDate(expiresAt.getDate() + plan.durationValue * 7);
+                break;
+            case "month":
+                expiresAt.setMonth(expiresAt.getMonth() + plan.durationValue);
+                break;
+            case "year":
+                expiresAt.setFullYear(expiresAt.getFullYear() + plan.durationValue);
+                break;
+        }
+
+        // Create transaction history record
+        const transaction = await Transaction.create({
+            user: user._id,
+            amount: plan.price,
+            currency: "KWD",
+            status: "succeeded",
+            plan: plan._id,
+        });
+
+        // Update user's plan and reset status
+        user.plan = plan._id;
+        user.status = "active";
+        user.expiresAt = expiresAt;
+        await user.save();
+
+        return res.status(200).json({
+            message: "Re-subscription request created successfully",
+            user,
+            transaction,
+        });
+    } catch (error) {
+        console.error("Error in reSubscripe:", error);
+        res.status(500).json({ message: "Server error", error });
+    }
+};
+
+export const getstudents = async (req, res) => {
+    try {
+        // 🔹 Find only users with status = "pending"
+        const users = await Users.find({ status: "pending" });
+
+        if (!users) {
+            return res.status(404).json({
+                success: false,
+                message: "No pending users found ❌",
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            users,
+        });
+    } catch (error) {
+        console.error("Error in get pending users:", error);
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+            error,
+        });
+    }
+};

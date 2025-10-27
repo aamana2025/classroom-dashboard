@@ -65,6 +65,52 @@ export const getSignupStatus = async (req, res) => {
  * Login only active users
  */
 
+export const logedUser = async (req, res) => {
+  const { accessToken } = req.body; // client sends a unique deviceToken (uuid or generated per device)
+  try {
+    const user = await User.findOne({ accessToken });
+    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+
+    // Check if subscription expired
+    if (user.expiresAt && new Date() > user.expiresAt) {
+      user.status = "pending"; // expire account
+      await user.save();
+      // return res.status(403).json({ message: "Subscription expired" });
+    }
+
+    // Check if user already logged in on another device
+    if (user.deviceToken && user.deviceToken !== deviceToken) {
+      return res.status(403).json({ message: "Account already active on another device" });
+    }
+
+    // Assign a new deviceToken if not set
+    if (!user.deviceToken) {
+      user.deviceToken = deviceToken || uuidv4(); // generate if client didn’t send
+      await user.save();
+    }
+
+    const accessToken = generateAccessToken(user);
+
+    res.status(200).json({
+      message: "Login successful",
+      accessToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        createdAt: user.createdAt,
+        status: user.status,
+        plan: user.plan,
+        expiresAt: user.expiresAt,
+        deviceToken: user.deviceToken,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Login error", error: error.message });
+  }
+};
+
 export const loginUser = async (req, res) => {
   const { email, password, deviceToken } = req.body; // client sends a unique deviceToken (uuid or generated per device)
   try {
@@ -114,9 +160,7 @@ export const loginUser = async (req, res) => {
   }
 };
 
-
 // logout
-
 export const logoutUser = async (req, res) => {
   try {
     const { userId } = req.body;
@@ -132,7 +176,6 @@ export const logoutUser = async (req, res) => {
     res.status(500).json({ message: "Logout error", error: error.message });
   }
 };
-
 
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
@@ -150,7 +193,7 @@ export const forgotPassword = async (req, res) => {
     const encodedEmail = encodeURIComponent(user.email);
     const resetLink = `${process.env.FRONTEND_URL}/Pages/Auth/App/reset-password/${encodedEmail}/${otp}`;
 
-    await sendOTPEmail(user,otp,resetLink);
+    await sendOTPEmail(user, otp, resetLink);
 
     res.json({ message: "OTP sent to your email" });
   } catch (error) {

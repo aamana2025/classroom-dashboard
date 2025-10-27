@@ -23,7 +23,6 @@ export const adminMiddleware = (req, res, next) => {
   next();
 };
 
-
 export const userActiveMiddleware = async (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "Unauthorized" });
@@ -38,9 +37,10 @@ export const userActiveMiddleware = async (req, res, next) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    
     // Check user status from DB
     if (user.status === "pending") {
-      return res.status(403).json({ message: "Account pending approval" });
+      return res.status(403).json({ message: "Account pending approval",status:'pending' });
     }
     
     // Attach fresh user object to request

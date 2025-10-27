@@ -33,6 +33,8 @@ export const joinClass = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
 export const getStudentClasses = async (req, res) => {
   try {
     const { studentId } = req.params;
@@ -73,6 +75,12 @@ export const getStudentData = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.expiresAt && new Date() > user.expiresAt) {
+      user.status = "pending"; // expire account
+      await user.save();
+      // return res.status(403).json({ message: "Subscription expired" });
     }
 
     // Build response

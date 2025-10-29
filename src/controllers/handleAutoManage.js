@@ -94,5 +94,39 @@ const cleanExpiredUsers = async () => {
     }
 };
 
+const checkExpiredSubscriptions = async () => {
+    try {
+        const now = new Date();
+
+        // Find users whose expiration date has passed and are still active
+        const expiredUsers = await Users.find({
+            expiresAt: { $lte: now },
+            status: "active",
+        });
+
+        if (expiredUsers.length === 0) {
+            console.log(`[${now.toISOString()}] ✅ No expired users found.`);
+            return;
+        }
+
+        // Update each expired user
+        for (const user of expiredUsers) {
+            user.status = "pending";
+            await user.save();
+            console.log(`⚠️ User ${user.email} marked as pending (subscription expired).`);
+        }
+
+        console.log(`[${now.toISOString()}] 🧹 Expired users updated: ${expiredUsers.length}`);
+    } catch (err) {
+        console.error("❌ Error while checking expired subscriptions:", err);
+    }
+};
+
+// Run every hour at minute 0 (e.g., 1:00, 2:00, 3:00, etc.)
+cron.schedule("0 * * * *", () => {
+    console.log("⏰ Running hourly subscription check...");
+    checkExpiredSubscriptions();
+});
+
 // Schedule daily cleanup
 cron.schedule("0 0 * * *", () => cleanExpiredUsers());

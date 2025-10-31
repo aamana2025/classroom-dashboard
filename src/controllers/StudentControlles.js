@@ -71,7 +71,7 @@ export const getStudentData = async (req, res) => {
     // Find user by ID and populate plan details
     const user = await Users.findById(studentId)
       .populate("plan", "title description durationValue durationType price _id") // only select needed fields
-      .lean(); // return plain JS object for easier formatting
+      // .lean(); // return plain JS object for easier formatting
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -81,6 +81,7 @@ export const getStudentData = async (req, res) => {
       user.status = "pending"; // expire account
       await user.save();
       // return res.status(403).json({ message: "Subscription expired" });
+      
     }
 
     // Build response

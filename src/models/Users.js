@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
   phone: { type: String },
   password: { type: String, required: true },
   plan: { type: mongoose.Schema.Types.ObjectId, ref: "Plan" },
-  status: { type: String, enum: ["pending", "active"], default: "pending" },
+  status: { type: String, enum: ["pending", "active"], default: "active" },
   accessToken: { type: String },
   createdAt: { type: Date, default: Date.now },
   expiresAt: { type: Date },
